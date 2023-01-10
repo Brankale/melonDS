@@ -37,6 +37,7 @@
 #include "LAN_Socket.h"
 #include "LAN_PCap.h"
 #include "IPC.h"
+#include "IPC.h"
 
 
 std::string EmuDirectory;
