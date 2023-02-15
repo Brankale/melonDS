@@ -87,6 +87,7 @@
 #include "SPU.h"
 #include "Wifi.h"
 #include "Platform.h"
+#include "IPC.h"
 #include "LocalMP.h"
 #include "Config.h"
 #include "DSi_I2C.h"
@@ -355,6 +356,8 @@ void EmuThread::run()
 
     while (EmuRunning != 0)
     {
+        IPC::Process();
+
         Input::Process();
 
         if (Input::HotkeyPressed(HK_FastForwardToggle)) emit windowLimitFPSChange();
@@ -2698,6 +2701,9 @@ void MainWindow::onPause(bool checked)
         OSD::AddMessage(0, "Resumed");
         pausedManually = false;
     }
+
+    if (Platform::InstanceID()==0) // HAX
+    IPC::SendCommand(0xFFFF, IPC::Cmd_Pause, 0, nullptr);
 }
 
 void MainWindow::onReset()
