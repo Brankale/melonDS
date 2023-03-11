@@ -196,7 +196,7 @@ EmuThread::EmuThread(QObject* parent) : QThread(parent)
     connect(this, SIGNAL(swapScreensToggle()), mainWindow->actScreenSwap, SLOT(trigger()));
     connect(this, SIGNAL(screenEmphasisToggle()), mainWindow, SLOT(onScreenEmphasisToggled()));
 
-    connect(this, SIGNAL(windowIPCPause()), mainWindow, SLOT(onIPCPause()));
+    connect(this, SIGNAL(windowIPCPause(bool)), mainWindow, SLOT(onIPCPause(bool)));
 
     static_cast<ScreenPanelGL*>(mainWindow->panel)->transferLayout(this);
 }
@@ -361,8 +361,6 @@ void EmuThread::run()
     while (EmuRunning != 0)
     {
         IPC::ProcessCommands();
-
-        if (IPC::CommandReceived(IPC::Cmd_Pause)) emit windowIPCPause();
 
         Input::Process();
 
@@ -677,6 +675,7 @@ void EmuThread::emuRun()
     // checkme
     emit windowEmuStart();
     AudioInOut::Enable();
+    IPC::SetActive(true);
 }
 
 void EmuThread::initContext()
@@ -701,6 +700,7 @@ void EmuThread::emuPause()
     while (EmuStatus != 2);
 
     AudioInOut::Disable();
+    IPC::SetActive(false);
 }
 
 void EmuThread::emuUnpause()
@@ -713,6 +713,7 @@ void EmuThread::emuUnpause()
     EmuRunning = PrevEmuStatus;
 
     AudioInOut::Enable();
+    IPC::SetActive(true);
 }
 
 void EmuThread::emuStop()
@@ -721,11 +722,13 @@ void EmuThread::emuStop()
     EmuPause = 0;
 
     AudioInOut::Disable();
+    IPC::SetActive(false);
 }
 
 void EmuThread::emuFrameStep()
 {
     if (EmuPause < 1) emit windowEmuPause();
+    if (EmuRunning != 3) IPC::SetActive(false);
     EmuRunning = 3;
 }
 
@@ -2709,19 +2712,18 @@ void MainWindow::onPause(bool checked)
         pausedManually = false;
     }
 
-    IPC::SendCommand(0xFFFF, IPC::Cmd_Pause, 0, nullptr);
+    IPC::SendCommandU8(0xFFFF, IPC::Cmd_Pause, (u8)checked);
 }
 
-void MainWindow::onIPCPause()
+void MainWindow::onIPCPause(bool pause)
 {
     // for IPC, using the normal way to trigger a pause (actPause->trigger())
     // isn't viable, because it would lead to broadcasting more IPC 'pause' messages
     // so we have to replicate it this way
 
-    actPause->toggle(); // changes visual state, without triggering onPause()
-    bool checked = actPause->isChecked();
+    actPause->setChecked(pause); // changes visual state, without triggering onPause()
 
-    if (checked)
+    if (pause)
     {
         emuThread->emuPause();
         OSD::AddMessage(0, "Paused");
