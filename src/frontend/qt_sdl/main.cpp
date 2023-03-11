@@ -88,7 +88,6 @@
 #include "Wifi.h"
 #include "Platform.h"
 #include "IPC.h"
-#include "LocalMP.h"
 #include "Config.h"
 #include "DSi_I2C.h"
 
@@ -2964,7 +2963,6 @@ void MainWindow::onOpenMPSettings()
 void MainWindow::onMPSettingsFinished(int res)
 {
     AudioInOut::AudioMute(mainWindow);
-    //LocalMP::SetRecvTimeout(Config::MPRecvTimeout);
     IPC::SetMPRecvTimeout(Config::MPRecvTimeout);
 
     emuThread->emuUnpause();
