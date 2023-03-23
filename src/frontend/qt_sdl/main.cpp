@@ -471,7 +471,14 @@ void EmuThread::run()
             }
 
             // process input and hotkeys
-            NDS::SetKeyMask(Input::InputMask);
+            if (Netplay::Active)
+            {
+                Netplay::ProcessInput();
+            }
+            else
+            {
+                NDS::SetKeyMask(Input::InputMask);
+            }
 
             if (Input::HotkeyPressed(HK_Lid))
             {
@@ -1570,6 +1577,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
 
             actMPStartClient = submenu->addAction("NETPLAY CLIENT");
             connect(actMPStartClient, &QAction::triggered, this, &MainWindow::onMPStartClient);
+
+            actMPTest = submenu->addAction("NETPLAY GO");
+            connect(actMPTest, &QAction::triggered, this, &MainWindow::onMPTest);
         }
     }
     {
@@ -2331,8 +2341,11 @@ void MainWindow::onOpenFile()
     recentFileList.prepend(filename);
     updateRecentFilesMenu();
 
-    NDS::Start();
-    emuThread->emuRun();
+    if (!Netplay::Active)
+    {
+        NDS::Start();
+        emuThread->emuRun();
+    }
 
     updateCartInserted(false);
 }
@@ -2428,8 +2441,11 @@ void MainWindow::onClickRecentFile()
     recentFileList.prepend(filename);
     updateRecentFilesMenu();
 
-    NDS::Start();
-    emuThread->emuRun();
+    if (!Netplay::Active)
+    {
+        NDS::Start();
+        emuThread->emuRun();
+    }
 
     updateCartInserted(false);
 }
@@ -2452,8 +2468,11 @@ void MainWindow::onBootFirmware()
         return;
     }
 
-    NDS::Start();
-    emuThread->emuRun();
+    if (!Netplay::Active)
+    {
+        NDS::Start();
+        emuThread->emuRun();
+    }
 }
 
 void MainWindow::onInsertCart()
@@ -2838,6 +2857,12 @@ void MainWindow::onMPStartHost()
 void MainWindow::onMPStartClient()
 {
     Netplay::StartClient();
+}
+
+void MainWindow::onMPTest()
+{
+    // HAX
+    Netplay::StartGame();
 }
 
 void MainWindow::onOpenEmuSettings()
