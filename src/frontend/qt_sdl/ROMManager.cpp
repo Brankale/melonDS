@@ -40,6 +40,8 @@
 namespace ROMManager
 {
 
+QStringList FullROMPath;
+
 int CartType = -1;
 std::string BaseROMDir = "";
 std::string BaseROMName = "";
@@ -734,6 +736,7 @@ bool LoadROM(QStringList filepath, bool reset)
     if (NDSSave) delete NDSSave;
     NDSSave = nullptr;
 
+    FullROMPath = filepath;
     BaseROMDir = basepath;
     BaseROMName = romname;
     BaseAssetName = romname.substr(0, romname.rfind('.'));
